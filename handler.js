@@ -95,7 +95,7 @@ module.exports.addLease = (event, context, callback) => {
     .then(() => {
       callback(null, createResponse(200, item.leaseId));
     })
-    .catch(() => {
+    .catch((err) => {
       callback(err, null);
     });
   addNewPermissions(item, context, callback);
