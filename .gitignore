@@ -29,3 +29,6 @@ package-lock.json
 # yarn.lock
 
 ## Project-specific files
+public_key
+secrets.json
+serverless.yml
