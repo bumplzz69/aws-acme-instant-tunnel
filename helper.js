@@ -16,6 +16,7 @@ module.exports.getSecurityGroupId = () => {
 module.exports.revokePermissions = async (ip) => {
   console.log(ip)
   const id = await this.getSecurityGroupId();
+  console.log("revokePermissions SecurityGroupId=", id);
   const sgParams = {
     GroupId: id,
     IpPermissions: [
@@ -31,10 +32,15 @@ module.exports.revokePermissions = async (ip) => {
       },
     ],
   };
+  console.log(sgParams);
   ec2
     .revokeSecurityGroupIngress(sgParams)
     .promise()
     .then((result) => {
+      console.log(result);
       return result;
+    })
+    .catch((err) => {
+      console.error(err);
     });
 };

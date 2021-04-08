@@ -116,6 +116,8 @@ module.exports.updateExpiredLeases = (event, context, callback) => {
   event.Records.forEach(record => {
     if(record.eventName == 'REMOVE') {
       const ip = record.dynamodb.OldImage.ip.S;
+      console.log("FROM DYNAMO:", ip);
+      console.log(record.dynamodb.OldImage);
       helper.revokePermissions(ip)
     }
   })
