@@ -4,9 +4,8 @@ let dynamo = new AWS.DynamoDB.DocumentClient();
 const ec2 = new AWS.EC2({ apiVersion: '2016-11-15' });
 module.exports.getSecurityGroupId = () => {
   var params = {
-    DryRun: false,
-  };
-  // Call EC2 to retrieve policy for selected bucket
+    InstanceIds: [process.env.EC2_INSTANCE_ID]
+  }
   return ec2
     .describeInstances(params)
     .promise()
