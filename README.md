@@ -67,6 +67,8 @@ The DynamoDB table has TTL enabled on the leaseEnd attribute. When the leaseEnd 
 1. Make sure you have the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) installed and that AWS credentials are properly configured before starting. You can do this by running `aws configure` on the command line.
 2. Clone this repository, change directory to it, and run `npm install`
 3. Go to [Auth0](https://auth0.com/) and sign up for an account. Go to Applications and click on your Default App. Here you can find your Auth0 development credentials for the next steps. Save the Client ID and Domain.
+4. Copy `secrets.json.sample`, `serverless.yml.sample`,
+   `public_key.sample` to new files without `.sample`
 4. Edit the `secrets.json` file and replace `AUTH0_CLIENT_ID` with the Client ID found in the previous step.
 5. Go back to Auth0 Application settings and click on _Show Advanced Settings -> Certificates_. Copy and paste the Signing Certificate into the `public_key` file.
 6. Edit `frontend/app.js`. Replace `AUTH0_CLIENT_ID` with the Client ID and `AUTH0_DOMAIN` with the Domain found in Step 3. Replace `leaseTime` with the desired time for temporary SSH permissions in __seconds__
@@ -101,7 +103,7 @@ Check out the [contributing guide](/.github/CONTRIBUTING.md).
 
 # References
 
-* The classic Warner Brothers cartoon _Fast and Furry-ous_: [watch it on YouTube](https://www.youtube.com/watch?v=4iWvedIhWjM) and [learn about its history on Wikipedia](https://en.wikipedia.org/wiki/Fast_and_Furry-ous) 
+* The classic Warner Brothers cartoon _Fast and Furry-ous_: [watch it on YouTube](https://www.youtube.com/watch?v=4iWvedIhWjM) and [learn about its history on Wikipedia](https://en.wikipedia.org/wiki/Fast_and_Furry-ous)
 * Serverless Auth0 [tutorial](https://www.serverless.com/examples/aws-node-auth0-custom-authorizers-api)
 # Modus Create
 

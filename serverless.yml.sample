@@ -7,9 +7,10 @@ provider:
     DYNAMODB_TABLE: leasesTable
     AUTH0_CLIENT_ID: ${file(./secrets.json):AUTH0_CLIENT_ID}
     AUTH0_CLIENT_PUBLIC_KEY: ${file(./public_key)}
-    VPC_ID: REPLACE WITH YOUR VPC ID
-    USER_AWS_REGION: REPLACE WITH YOUR AWS REGION
-    S3_BUCKET_NAME: REPLACE WITH A UNIQUE S3 BUCKET NAME
+    VPC_ID: vpc-2b8a1f4c
+    USER_AWS_REGION: us-east-1
+    S3_BUCKET_NAME: auth0-prod-bucket
+    EC2_INSTANCE_ID: i-xxxxxxxxxxxxxxxxx
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
@@ -60,9 +61,9 @@ resources: # CloudFormation template syntax from here on.
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        StreamSpecification: 
+        StreamSpecification:
           StreamViewType: OLD_IMAGE
-        TimeToLiveSpecification: 
+        TimeToLiveSpecification:
           AttributeName: leaseEnd
           Enabled: true
     managedSecurityGroup:
