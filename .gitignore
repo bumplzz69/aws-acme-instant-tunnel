@@ -32,3 +32,4 @@ package-lock.json
 public_key
 secrets.json
 serverless.yml
+frontend/config.js

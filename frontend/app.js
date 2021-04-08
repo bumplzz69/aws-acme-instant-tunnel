@@ -1,10 +1,7 @@
 /* global window document localStorage fetch alert */
 // Fill in with your values
-const AUTH0_CLIENT_ID = 'REPLACE WITH YOUR CLIENT ID';
-const AUTH0_DOMAIN = 'REPLACE WITH YOUR DOMAIN';
 const AUTH0_CALLBACK_URL = window.location.href; // eslint-disable-line
-const PRIVATE_ENDPOINT = 'REPLACE WITH YOUR PRIVATE ENDPOINT';
-const leaseTime = 'REPLACE WITH INTEGER TIME IN SECONDS'
+const leaseTime = 3600;
 // initialize auth0 lock
 const lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
   // eslint-disable-line no-undef
