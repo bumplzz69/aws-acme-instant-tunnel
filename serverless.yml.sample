@@ -4,7 +4,8 @@ provider:
   runtime: nodejs12.x
   region: ${self:provider.environment.USER_AWS_REGION}
   environment:
-    DYNAMODB_TABLE: leasesTable
+    TTL_DYNAMODB_TABLE: convox_production_access_ttl
+    HISTORY_DYNAMODB_TABLE: convox_production_access_history
     AUTH0_CLIENT_ID: ${file(./secrets.json):AUTH0_CLIENT_ID}
     AUTH0_CLIENT_PUBLIC_KEY: ${file(./public_key)}
     VPC_ID: vpc-2b8a1f4c
@@ -26,7 +27,8 @@ provider:
         - dynamodb:GetShardIterator
         - dynamodb:ListStreams
       Resource:
-        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}'
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TTL_DYNAMODB_TABLE}'
+        - 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.HISTORY_DYNAMODB_TABLE}'
     - Effect: 'Allow'
       Action:
         - 'ec2:DescribeSecurityGroups'
@@ -47,7 +49,7 @@ resources: # CloudFormation template syntax from here on.
     leasesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        TableName: ${self:provider.environment.TTL_DYNAMODB_TABLE}
         AttributeDefinitions:
           - AttributeName: leaseId
             AttributeType: S
@@ -66,6 +68,23 @@ resources: # CloudFormation template syntax from here on.
         TimeToLiveSpecification:
           AttributeName: leaseEnd
           Enabled: true
+    historyTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.HISTORY_DYNAMODB_TABLE}
+        AttributeDefinitions:
+          - AttributeName: leaseId
+            AttributeType: S
+          - AttributeName: leaseEnd
+            AttributeType: N
+        KeySchema:
+          - AttributeName: leaseId
+            KeyType: HASH
+          - AttributeName: leaseEnd
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
     managedSecurityGroup:
       Type: AWS::EC2::SecurityGroup
       Properties:
@@ -161,3 +180,4 @@ functions:
 #     NewOutput:
 #       Description: "Description for the output"
 #       Value: "Some output value"
+

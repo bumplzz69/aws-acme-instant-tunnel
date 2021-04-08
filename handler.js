@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const helper = require('./helper');
 
-const TABLE_NAME = process.env.DYNAMODB_TABLE;
+const TTL_TABLE_NAME = process.env.TTL_DYNAMODB_TABLE;
+const HISTORY_TABLE_NAME = process.env.HISTORY_DYNAMODB_TABLE;
 const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID;
 const AUTH0_CLIENT_PUBLIC_KEY = process.env.AUTH0_CLIENT_PUBLIC_KEY;
 const ec2 = new AWS.EC2({ apiVersion: '2016-11-15' });
@@ -69,35 +70,21 @@ module.exports.auth = (event, context, callback) => {
   }
 };
 module.exports.addLease = (event, context, callback) => {
-  console.log("addLease");
-  console.log(event);
-  let errorMessage = null;
+  console.log(`addLease:event=${JSON.stringify(event)}, context=${context}, callback=${callback}`);
   let item = JSON.parse(JSON.stringify(event));
   item = JSON.parse(item.body);
   item.leaseId = uuidv4();
   item.leaseEnd = parseInt(item.leaseEnd);
   console.log("DynamoDB item=", item);
 
-  const params = {
-    TableName: TABLE_NAME,
-    Item: item,
-  };
-  dynamo
-    .put(params)
-    .promise()
-    .then((response) => {
-      console.log("DynamoDB response=", response);
-      console.log("DynamoDB leaseId=", item.leaseId);
-      // return callback(null, createResponse(200, item.leaseId));
-    })
-    .catch((err) => {
-      console.error("DynamoDB", err);
-      errorMessage = err;
-      // callback(err, null);
-    });
+  let errorMessage = null;
+  (async() => {
+    errorMessage = await writeDynamo(item);
+  })();
   addNewPermissions(item, context, callback);
 
   let message = errorMessage ? errorMessage : 'You can now SSH into the EC2 instance for 1 hour';
+  console.log(`Before callback: errorMessage=${errorMessage}, message=${message}`);
   callback(null, {
     statusCode: errorMessage ? 400 : 200,
     headers: {
@@ -111,8 +98,9 @@ module.exports.addLease = (event, context, callback) => {
     }),
   });
 };
+
 module.exports.updateExpiredLeases = (event, context, callback) => {
-  console.log(event)
+  console.log(`updateExpiredLeases:event=${JSON.stringify(event)}, context=${context}, callback=${callback}`);
   event.Records.forEach(record => {
     if(record.eventName == 'REMOVE') {
       const ip = record.dynamodb.OldImage.ip.S;
@@ -123,6 +111,7 @@ module.exports.updateExpiredLeases = (event, context, callback) => {
   })
   return event;
 };
+
 function createResponse(statusCode, message) {
   return {
     statusCode: statusCode,
@@ -135,6 +124,45 @@ function createResponse(statusCode, message) {
     body: JSON.stringify(message),
   };
 }
+
+async function writeDynamo(item) {
+  console.log("=== writeDynamo");
+  let errorMessage = null;
+  let params = {
+    TableName: TTL_TABLE_NAME,
+    Item: item,
+  };
+  dynamo
+    .put(params)
+    .promise()
+    .then((response) => {
+      console.log(`writeDynamo ${TTL_TABLE_NAME} Success:response=${JSON.stringify(response)}, item=${JSON.stringify(item)}`);
+      // return callback(null, createResponse(200, item.leaseId));
+    })
+    .catch((err) => {
+      console.error(`writeDynamo ${TTL_TABLE_NAME} ERR:${JSON.stringify(err)}`);
+      errorMessage = err;
+      // callback(err, null);
+    });
+
+  params = {
+    TableName: HISTORY_TABLE_NAME,
+    Item: item,
+  };
+  dynamo
+    .put(params)
+    .promise()
+    .then((response) => {
+      console.log(`writeDynamo ${HISTORY_TABLE_NAME} Success:response=${JSON.stringify(response)}, item=${JSON.stringify(item)}`);
+      resolve(errorMessage);
+    })
+    .catch((err) => {
+      console.error(`writeDynamo ${HISTORY_TABLE_NAME} ERR:${JSON.stringify(err)}`);
+      errorMessage = err;
+      resolve(errorMessage);
+    });
+}
+
 async function addNewPermissions(item, context, callback) {
   const id = await helper.getSecurityGroupId();
   console.log('addNewPermissions SecurityGroupId=', id);
@@ -157,11 +185,10 @@ async function addNewPermissions(item, context, callback) {
   ec2
     .authorizeSecurityGroupIngress(sgParams)
     .promise()
-    .then((result) => {
-      console.error(result);
-      // callback(null, createResponse(200, result));
+    .then((response) => {
+      console.log(`addNewPermissions Success:response=${JSON.stringify(response)}`);
     })
     .catch((err) => {
-      console.error(err);
+      console.error(`addNewPermissions ERR: ${JSON.stringify(err)}`);
     });
 }
