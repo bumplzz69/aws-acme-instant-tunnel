@@ -69,22 +69,15 @@ module.exports.auth = (event, context, callback) => {
   }
 };
 module.exports.addLease = (event, context, callback) => {
-  callback(null, {
-    statusCode: 200,
-    headers: {
-      /* Required for CORS support to work */
-      'Access-Control-Allow-Origin': '*',
-      /* Required for cookies, authorization headers with HTTPS */
-      'Access-Control-Allow-Credentials': true,
-    },
-    body: JSON.stringify({
-      message: 'You can now SSH into the EC2 instance for 1 hour',
-    }),
-  });
+  console.log("addLease");
+  console.log(event);
+  let errorMessage = null;
   let item = JSON.parse(JSON.stringify(event));
   item = JSON.parse(item.body);
   item.leaseId = uuidv4();
-  console.log(item);
+  item.leaseEnd = parseInt(item.leaseEnd);
+  console.log("DynamoDB item=", item);
+
   const params = {
     TableName: TABLE_NAME,
     Item: item,
@@ -92,13 +85,31 @@ module.exports.addLease = (event, context, callback) => {
   dynamo
     .put(params)
     .promise()
-    .then(() => {
-      callback(null, createResponse(200, item.leaseId));
+    .then((response) => {
+      console.log("DynamoDB response=", response);
+      console.log("DynamoDB leaseId=", item.leaseId);
+      // return callback(null, createResponse(200, item.leaseId));
     })
     .catch((err) => {
-      callback(err, null);
+      console.error("DynamoDB", err);
+      errorMessage = err;
+      // callback(err, null);
     });
   addNewPermissions(item, context, callback);
+
+  let message = errorMessage ? errorMessage : 'You can now SSH into the EC2 instance for 1 hour';
+  callback(null, {
+    statusCode: errorMessage ? 400 : 200,
+    headers: {
+      /* Required for CORS support to work */
+      'Access-Control-Allow-Origin': '*',
+      /* Required for cookies, authorization headers with HTTPS */
+      'Access-Control-Allow-Credentials': true,
+    },
+    body: JSON.stringify({
+      message: message
+    }),
+  });
 };
 module.exports.updateExpiredLeases = (event, context, callback) => {
   console.log(event)
@@ -124,6 +135,7 @@ function createResponse(statusCode, message) {
 }
 async function addNewPermissions(item, context, callback) {
   const id = await helper.getSecurityGroupId();
+  console.log('addNewPermissions SecurityGroupId=', id);
   const sgParams = {
     GroupId: id,
     IpPermissions: [
@@ -144,6 +156,10 @@ async function addNewPermissions(item, context, callback) {
     .authorizeSecurityGroupIngress(sgParams)
     .promise()
     .then((result) => {
-      callback(null, createResponse(200, result));
+      console.error(result);
+      // callback(null, createResponse(200, result));
+    })
+    .catch((err) => {
+      console.error(err);
     });
 }
