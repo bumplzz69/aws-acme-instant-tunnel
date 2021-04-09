@@ -88,7 +88,7 @@ module.exports.addLease = (event, context, callback) => {
   })();
   addNewPermissions(item, context, callback);
 
-  const message = errorMessage ? errorMessage : 'You can now SSH into the EC2 instance for ' + timeConvert(LEASED_SECONDS);
+  const message = errorMessage ? errorMessage : 'You can now SSH into the EC2 instance for ' + secondsToHms(LEASED_SECONDS);
   console.log(`Before callback: errorMessage=${errorMessage}, message=${message}`);
   callback(null, {
     statusCode: errorMessage ? 400 : 200,
@@ -198,9 +198,15 @@ async function addNewPermissions(item, context, callback) {
     });
 }
 
-function timeConvert(num) {
-  const hours = Math.floor(num / 60);
-  const minutes = num % 60;
-  return `${hours} hours ${minutes} minutes`;
+function secondsToHms(d) {
+  d = Number(d);
+  const h = Math.floor(d / 3600);
+  const m = Math.floor(d % 3600 / 60);
+  const s = Math.floor(d % 3600 % 60);
+
+  const hDisplay = h > 0 ? h + (h == 1 ? " hour " : " hours ") : "";
+  const mDisplay = m > 0 ? m + (m == 1 ? " minute " : " minutes ") : "";
+  const sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+  return hDisplay + mDisplay + sDisplay;
 }
 
