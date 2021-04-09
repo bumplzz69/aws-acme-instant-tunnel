@@ -8,6 +8,7 @@ provider:
     HISTORY_DYNAMODB_TABLE: convox_production_access_history
     AUTH0_CLIENT_ID: ${file(./secrets.json):AUTH0_CLIENT_ID}
     AUTH0_CLIENT_PUBLIC_KEY: ${file(./public_key)}
+    LEASED_SECONDS: 3600
     VPC_ID: vpc-2b8a1f4c
     USER_AWS_REGION: us-east-1
     S3_BUCKET_NAME: auth0-prod-bucket

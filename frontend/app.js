@@ -1,7 +1,6 @@
 /* global window document localStorage fetch alert */
 // Fill in with your values
 const AUTH0_CALLBACK_URL = window.location.href; // eslint-disable-line
-const leaseTime = 3600;
 // initialize auth0 lock
 const lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, {
   // eslint-disable-line no-undef
@@ -83,7 +82,6 @@ document.getElementById('btn-private').addEventListener('click', async () => {
     });
   console.log(ipAddress);
   // Do request to private endpoint
-  const currentTime = Math.floor(Date.now()/1000);
   fetch(PRIVATE_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -92,8 +90,6 @@ document.getElementById('btn-private').addEventListener('click', async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      leaseEnd: currentTime + leaseTime,
-      leaseStart: currentTime,
       name: profile.email,
       ip: `${ipAddress}/32`,
     }),

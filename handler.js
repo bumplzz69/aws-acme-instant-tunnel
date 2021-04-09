@@ -8,6 +8,7 @@ const TTL_TABLE_NAME = process.env.TTL_DYNAMODB_TABLE;
 const HISTORY_TABLE_NAME = process.env.HISTORY_DYNAMODB_TABLE;
 const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID;
 const AUTH0_CLIENT_PUBLIC_KEY = process.env.AUTH0_CLIENT_PUBLIC_KEY;
+const LEASED_SECONDS = parseInt(process.env.LEASED_SECONDS);
 const ec2 = new AWS.EC2({ apiVersion: '2016-11-15' });
 let dynamo = new AWS.DynamoDB.DocumentClient();
 
@@ -72,9 +73,11 @@ module.exports.auth = (event, context, callback) => {
 module.exports.addLease = (event, context, callback) => {
   console.log(`addLease:event=${JSON.stringify(event)}, context=${context}, callback=${callback}`);
   let item = JSON.parse(JSON.stringify(event));
+  const currentTime = Math.floor(Date.now()/1000);
   item = JSON.parse(item.body);
   item.leaseId = uuidv4();
-  item.leaseEnd = parseInt(item.leaseEnd);
+  item.leaseStart = currentTime;
+  item.leaseEnd = currentTime + LEASED_SECONDS;
   console.log("DynamoDB item=", item);
 
   let errorMessage = null;
@@ -83,7 +86,7 @@ module.exports.addLease = (event, context, callback) => {
   })();
   addNewPermissions(item, context, callback);
 
-  let message = errorMessage ? errorMessage : 'You can now SSH into the EC2 instance for 1 hour';
+  const message = errorMessage ? errorMessage : 'You can now SSH into the EC2 instance for ' + timeConvert(LEASED_SECONDS);
   console.log(`Before callback: errorMessage=${errorMessage}, message=${message}`);
   callback(null, {
     statusCode: errorMessage ? 400 : 200,
@@ -192,3 +195,10 @@ async function addNewPermissions(item, context, callback) {
       console.error(`addNewPermissions ERR: ${JSON.stringify(err)}`);
     });
 }
+
+function timeConvert(num) {
+  const hours = Math.floor(num / 60);
+  const minutes = num % 60;
+  return `${hours} hours ${minutes} minutes`;
+}
+
