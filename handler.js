@@ -8,6 +8,7 @@ const TTL_TABLE_NAME = process.env.TTL_DYNAMODB_TABLE;
 const HISTORY_TABLE_NAME = process.env.HISTORY_DYNAMODB_TABLE;
 const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID;
 const AUTH0_CLIENT_PUBLIC_KEY = process.env.AUTH0_CLIENT_PUBLIC_KEY;
+const EC2_INSTANCE_ID = process.env.EC2_INSTANCE_ID;
 const LEASED_SECONDS = parseInt(process.env.LEASED_SECONDS);
 const ec2 = new AWS.EC2({ apiVersion: '2016-11-15' });
 let dynamo = new AWS.DynamoDB.DocumentClient();
@@ -78,6 +79,7 @@ module.exports.addLease = (event, context, callback) => {
   item.leaseId = uuidv4();
   item.leaseStart = currentTime;
   item.leaseEnd = currentTime + LEASED_SECONDS;
+  item.ec2_instance_id = EC2_INSTANCE_ID;
   console.log("DynamoDB item=", item);
 
   let errorMessage = null;
